@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t drcmg/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true drcmg/react-test npm test
+
+after_success:
+  - docker build -t drcmg/multi-client ./client
+  - docker build -t drcmg/multi-nginx ./nginx
+  - docker build -t drcmg/multi-server ./server
+  - docker build -t drcmg/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push drcmg/multi-client
+  - docker push drcmg/multi-nginx
+  - docker push drcmg/multi-server
+  - docker push drcmg/multi-worker
